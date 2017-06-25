@@ -1,0 +1,518 @@
+<Html>
+
+ <head>
+    <title> project </title>
+      <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"> </script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+       	  <script src="http://duspviz.mit.edu/_assets/data/boston_neighborhoods.json"> </script>
+            <script src="http://d3js.org/topojson.v1.min.js"> </script>
+            <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+            
+ <style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+  fill: none;
+  stroke: steelblue;
+}  
+
+
+.axis line,
+.axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+
+div {
+  font: 10px sans-serif;
+}
+
+.axis line,
+.axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+} 
+
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
+}
+
+.legend rect {
+  fill:white;
+  stroke:black;
+  opacity:0.8;}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;   /* reference from http://bl.ocks.org/Caged/6476579*/
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+.location {
+    fill: steelblue;
+}
+     .location:hover {
+    fill: red;   
+}
+
+
+
+
+ </style>
+  
+ </head>
+
+ <body>
+     
+     <h2> Project - Data Visualization  "Boston Crime Records Data Visualization"</h2> 
+         <h2> Name :Virbhadrasinh Karansinh Kumpavat</h2>
+         <h2> ID : 01592422 </h2>
+     ===================================================================================================================    
+         <h2> Table of contents </h2>
+     <h2> 1.Total Number of Crime Reported over the Years (2013 vs 2014) = Dot line chart </h2>
+     <h2> 2.Different Types of Crime Recorded By the Boston Police Department over the both Year = Bar Graph  </h2>
+     <h2> 3.Boston city  map to plot  location for particular type of crime = Map </h2>
+     ==================================================================================================================
+	<div id="crimechart"> </div>
+        
+        <h2> 1.Total Number of Crimes Reported over the Years in Boston city .</h2>
+     <h2>   Here Line graph provide information about total number of crime take place in different month over the year 2013 and 2014 </h2>
+	<script>
+
+
+	var firstYear = [];
+        var secondYear = [];
+	
+	var margin = {top: 20, right: 20, bottom: 20, left: 20},
+		padding = {top: 60, right: 60, bottom: 60, left: 60},
+		outerWidth = 880,		// Padding and margin set with d3 margin provided by professor Dr.Koop
+		outerHeight = 600,
+		innerWidth = outerWidth - margin.left - margin.right,
+		innerHeight = outerHeight - margin.top - margin.bottom,
+		width = innerWidth - padding.left - padding.right,
+		height = innerHeight - padding.top - padding.bottom;
+	
+	
+	var Month =["JAN","FEB","MAR", "APR", "MAY","JUNE","JULY","AUG","SEP","OCT","NOV","DEC"];
+	
+        
+      //  var min/max= d.extend(d3.valiues)
+	var x = d3.scale.ordinal()
+		.domain(Month)
+		.rangeBands([0,width]);
+  
+
+	var y = d3.scale.linear()
+			.domain([0,9000])
+			.range([height,0]);
+	
+	
+	var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom");
+
+	var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient("left");
+           
+                             
+	var svg = d3.select("body").append("svg")
+                        .attr("width", outerWidth)
+			.attr("height", outerHeight)
+			.style('background','#f4f4f4')
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                
+              
+	
+	var g = svg.append("g")
+		.attr("transform", "translate(" + padding.left + "," + padding.top + ")");
+
+
+		g.append("g")
+        		.attr("class", "x axis")
+			.attr("transform", "translate(0," + height + ")")
+			.call(xAxis);
+
+		g.append("g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(0,0)")
+			.call(yAxis);
+                                
+   				
+		g .append("text")
+            .attr("transform", "translate("+ (-50) +","+200+")rotate(-90)")   
+            .text("Total Number of Crime Over the Year");    // I use stack overflow questions  for understanding how to labeling on axist..
+                
+            x.domain(d3.extent(Month, function(d) { return d.Month; }));
+                
+		d3.csv("data/Boston.csv", function(data) {
+	//	console.log(data);
+                       
+                    var nested_data = d3.nest()
+                        .key(function(d) { return d.Year; })
+                        .key(function(d) { return d.Month; })
+                        .rollup(function(leaves) { return leaves.length; })
+                        .entries(data);
+                      //    console.log(nested_data) ;
+   
+          
+           var valueline = d3.svg.line()
+       
+            .x(function(d) { return d.key*60 -26 ; })
+            .y(function(d) { return y(d.values); });
+    
+                    g.append("path")
+                        .attr('d', valueline(nested_data[0]['values']))
+                        .attr('stroke', 'green')
+                        .attr('stroke-width', 2)
+                        .attr('fill', 'none');
+                        
+                        
+                       g.append("path")
+                        .attr('d', valueline(nested_data[1]['values']))
+                        .attr('stroke', 'red')
+                        .attr('stroke-width', 2)
+                        .attr('fill', 'none');
+                             
+             g.selectAll("circle.red")
+                .data(nested_data[0]['values'])
+                .enter()
+                .append("circle")
+                .attr("class","red")
+                 .attr("r", 3.5)
+                .attr("cx", function(d) { return d.key*60 -26 ; })
+                .attr("cy", function(d) { return y(d.values); });
+             
+                g.selectAll("circle.green")
+                    .data(nested_data[1]['values'])
+                    .enter()
+                    .append("circle")
+                    .attr("class","green")
+                    .attr("r", 3.5)
+                    .attr("cx", function(d) { return d.key*60 -26 ; })
+                    .attr("cy", function(d) { return y(d.values); });
+
+      
+                var legenddata = []; 
+
+            legenddata.push({key:"Number of Crime In Year 2013", value:"green"});
+            legenddata.push({key:"Number of Crime In Year 2014", value:"red"});
+                // console.log(legenddata);
+            
+            var legend = svg.selectAll("legend")
+                            .data(legenddata)
+                            .enter().append("g")
+                            .attr("class", "legend")
+                            .attr("transform", function(d, i) {return "translate(0," + (height - 20 - 20 * i) + ")";});
+
+                        legend.append("rect")
+                               .attr("x", width - 20)
+                                .attr("width", 16)
+                                .attr("height", 16)
+                                .style("fill", function(d) {return d.value;});
+
+                        legend.append("text")
+                        .attr("x", width - 24)
+                        .attr("y", 13)
+                        .attr("text-anchor", "end")
+                         .text(function(d) {return d.key;});
+                    
+    });			
+   	
+ </script>
+ <h2> 2. Different Types of Crime Recorded By the Boston Police Department over the Year </h2>
+ <h2>Bar graph represent total number of distinct type of crimes in specific year 2013 or 2014 </h2>
+<form action="">
+    <center> <strong>Select Year Here</strong> <input type="radio" id="year_1" name="year" value="2013" checked> 2013 
+        <input type="radio" id="year_2" name="year" value="2014"> 2014 <br> </center>
+ <div id="crimetype"> </div> 
+</form>  
+ 
+ <script type="text/javascript">
+ 
+        d3.csv("data/Boston.csv", function(data) {
+            //   console.log(data);
+       
+    var margin = {top: 20, right: 20, bottom: 20, left: 20},
+		padding = {top: 60, right: 60, bottom: 150, left: 60},
+		outerWidth =990,  //Padding and margin set with d3 margin provided by professor Dr.Koop
+		outerHeight = 700,
+		innerWidth = outerWidth - margin.left - margin.right,
+		innerHeight = outerHeight - margin.top - margin.bottom,
+		width = innerWidth - padding.left - padding.right,
+		height = innerHeight - padding.top - padding.bottom;
+
+          var crimetype = d3.nest()
+                          .key(function(d) { return d.Year; })
+                          .key(function(d) { return d.Incidents; })
+                           .rollup(function(leaves) { return leaves.length; })
+                            .entries(data);
+                        // console.log(crimetype);             
+        
+        // for 2013 data crime and value
+       $(document).ready(function() { 
+                                                              // REference : for radio button implementatin use w3school.com and stack overflow.com  
+           $("input[name=year]:radio").click(function () {
+               $("#crimetype").empty();
+               var year = d3.select('input[name="year"]:checked').node().value;
+                var i;
+                if(year==2013)
+                {
+                    i = 0;
+                }
+                else if(year==2014)
+                {
+                    i = 1;
+                }
+
+                var fyearcrime = [];
+
+                var fyearcrime = crimetype[i]['values'].map(function (d) {
+                            return d.key;
+                        });
+            //   console.log(fyearcrime) ; 
+
+             // for 2013 values
+             var fyearcrimeval = [];       
+             var fyearcrimeval = crimetype[i]['values'].map(function (d) {
+                        return d.values;
+                        });
+         //     console.log(fyearcrimeval) ;
+
+            var x = d3.scale.ordinal()
+                .domain(fyearcrime)
+                .rangeBands([0, width]);
+             
+
+            var y = d3.scale.linear()
+                    .domain([0,10000])
+                    .range([height,0]);
+
+
+            var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient("bottom");
+
+            var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left");
+
+
+   // Reference :for draw tool tip get reference from http://bl.ocks.org/Caged/6476579
+                       var tip = d3.tip()
+                        .attr('class', 'd3-tip')
+                        .offset([-10, 0])
+                        .html(function(d) {
+                         return "<strong>Number of crime:</strong> <span style='color:red'>" + d + "</span>";
+                        });
+ 
+             
+            var svg = d3.select("#crimetype").append("svg")
+                            .attr("width", outerWidth)
+                            .attr("height", outerHeight)
+                            .style('background','#f4f4f4')
+                            .append("g")
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                  svg.call(tip);
+
+            var g = svg.append("g")
+                    .attr("transform", "translate(" + padding.left + "," + padding.top + ")");
+
+                  g.append("g")
+                            .attr("class", "y axis")
+                            .attr("transform", "translate(0,0)")
+                            .call(yAxis);
+
+                    g .append("text")
+                .attr("transform", "translate("+ (-50) +","+200+")rotate(-90)")   
+                .text("Numbers of Crime");    // I use stack overflow questions  for understanding how to labeling on axist..
+
+                    var barWidth;
+                                        
+                    if(year==2013)
+                {
+                     barWidth= 11;
+                }
+                else 
+                {
+                    barWidth = 11.4;
+                }
+                    var barOffset= 1;  
+
+                    g.append("g")			// for  understanding  to draw bar chart learn from  https://www.youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA learning D3.
+                            .selectAll('rect')
+                            .data(fyearcrimeval)
+                            .enter().append('rect')
+                            .attr("class", 'bar')
+                            .attr('width', barWidth)
+                            .attr('height',function(d){ return height - y(d) ;})
+                            .attr ('x',function(d ,i){ return   i * (barWidth+barOffset) ; })
+                            .attr ('y',function(d){	return  y(d); })
+                            .on('mouseover', tip.show)
+                            .on('mouseout', tip.hide)               /* REference taken from Stack overflow*/
+                            .on('click',function(d, i){       
+                          d3.select("#Bostoncrime svg").remove();
+                             dotPlot($("input[name=year]:checked").val(),fyearcrime[i]);
+                    });
+
+
+                        g.append("g")
+                            .attr("class", "x axis")
+                            .attr("transform", "translate(0," + height + ")")
+                            .call(xAxis)
+                            .selectAll("text")
+                            .attr("y", 0)
+                            .attr("x", 9)
+                            .attr("dy", ".35em")
+                            .attr("transform", "rotate(90)")
+                            .style("text-anchor", "start");     
+                 });			
+		
+		$('input:radio:last').prop('checked', true).trigger("click");   
+                
+       });               
+    });				
+</script>
+
+
+ <div id="Bostoncrime"> 
+ <h2> 3.Boston city map use for project the location of crime site, where the particular type of Crime take place in Boston city</h2>
+ <center> <h2 style="color:red"><u>Crime site Location</u><h2><h1></h1> </center>
+            
+     <h2>Boston City Map</h2>
+     
+ </div>
+<script type="text/javascript"> 
+    
+     // Reference taken to draw  boston map from http://duspviz.mit.edu/d3-workshop/mapping-data-with-d3/
+function dotPlot(year, crime)
+{
+      d3.csv("data/Boston.csv", function(data) {
+        // console.log(data);
+          
+             var allcrime =[];        
+   // console.log(data[0].Lat_long.split(" ")[0] + "" +data[0].Lat_long.split(" ")[1] );
+       for (var i=0; i<data.length;i++){
+                if(data[i].Year===year  && data[i].Incidents===crime) 
+                {
+                allcrime.push({"Address":data[i].Address,"lat":parseFloat(data[i].Lat_long.split(" ")[0].substring(1).slice(0,-1)),"lng":parseFloat(data[i].Lat_long.split(" ")[1].slice(0,-1))});
+                }
+        }
+//        console.log(allcrime); 
+   
+    var margin = {top: 20, right: 20, bottom: 20, left: 20},
+                    padding = {top: 60, right: 60, bottom: 60, left: 60},
+                    outerWidth =990,  //Padding and margin set with d3 margin provided by professor Dr.Koop
+                    outerHeight = 700,
+                    innerWidth = outerWidth - margin.left - margin.right,
+                    innerHeight = outerHeight - margin.top - margin.bottom,
+                    width = innerWidth - padding.left - padding.right,
+                    height = innerHeight - padding.top - padding.bottom;
+
+    var mysvg = d3.select("#Bostoncrime").append("svg")
+                    .style('background','#f4f4f4')
+                    .attr( "width", width )
+                    .attr( "height", height );
+
+    var albersProjection = d3.geo.albers()
+                            .scale( 180000 )
+                            .rotate( [71.057,0] )
+                            .center( [0, 42.313] )
+                            .translate( [width/2,height/2] );
+
+// Reference taken for boston map from http://duspviz.mit.edu/d3-workshop/mapping-data-with-d3/
+           
+        var geoPath = d3.geo.path()
+                            .projection( albersProjection );
+
+
+            mysvg.selectAll( "path" )
+                .data( neighborhoods_json.features )
+                .enter()
+                .append( "path" )
+                .attr( "fill", "#ccc" )
+                .attr( "stroke", "#333")
+                .attr( "d", geoPath );
+        
+        
+       var circle = mysvg.selectAll("circle")
+				.data(allcrime)
+				.enter().append("circle")
+				.attr("cx", function(d){return albersProjection([d["lng"], d["lat"]])[0]; })      // refe from dr koop codepen example
+				.attr("cy", function(d){return albersProjection([d["lng"], d["lat"]])[1];})
+				.attr("r",3.5)
+                                .attr("class","location");
+				 
+    
+                  circle.on("mouseover", function(d){
+    d3.select("h1").text(d.Address);
+    d3.select(this).attr("class","location hover");
+})
+    .on("mouseout", function(d){
+    d3.select("h1").text("Address");
+    d3.select(this).attr("class","location");
+      });  
+      
+      
+      mysvg.append("text")
+            .attr("x",800)  
+            .attr("y",30)  
+            .attr("text",30)  
+            .style("text-anchor","end")  
+            .style("font-size","12px")  
+            .style("font-weight","bold")  
+            .text(crime);  
+    });      
+}  
+dotPlot("2014","ROBBERY");
+ /* References taken for and from
+  http://bl.ocks.org/ZJONSSON/3918369 for multiline graph understanding and implimentation.
+  http://codepen.io/dakoop/pen/aNJaPz proffessor koops example for legends
+  http://bl.ocks.org/Caged/6476579 for Bar chart tool tip and hover 
+  http://duspviz.mit.edu/d3-workshop/mapping-data-with-d3/ for boston city map
+  */
+ 
+</script>
+
+ </body>
+ </html>
